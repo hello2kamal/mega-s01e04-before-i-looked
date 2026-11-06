@@ -10,7 +10,7 @@ const css = `
   body { margin: 0; font: 15px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--fg); background: var(--bg); }
   header { display: flex; gap: 1.5rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line); }
   header .marker { margin-left: auto; color: var(--mute); }
-  main { padding: 1.25rem; max-width: 60rem; }
+  main { padding: 1.25rem; max-width: 96rem; }
   table { border-collapse: collapse; width: 100%; }
   th, td { text-align: left; padding: .35rem .75rem .35rem 0; border-bottom: 1px solid var(--line); }
   th { color: var(--mute); font-weight: normal; }
@@ -29,9 +29,10 @@ const css = `
   .digest-bar-fill.retry { background: #b47a29; }
   .digest-bar-count { text-align: right; }
   .digest-table-wrap { overflow-x: auto; }
-  .digest-table { min-width: 72rem; }
+  .digest-table { min-width: 60rem; }
   .digest-table th, .digest-table td { white-space: nowrap; }
-  .digest-table td:nth-child(6) { white-space: normal; min-width: 14rem; overflow-wrap: anywhere; }
+  .digest-table td:nth-child(6) { white-space: normal; min-width: 10rem; overflow-wrap: anywhere; }
+  .digest-table td:nth-child(7), .digest-table td:nth-child(8) { white-space: normal; min-width: 10rem; overflow-wrap: anywhere; }
   .digest-attention { background: color-mix(in srgb, var(--warn) 10%, transparent); }
   @media (max-width: 40rem) { main { padding: .8rem; } header { padding: .75rem .8rem; } }
 `;
