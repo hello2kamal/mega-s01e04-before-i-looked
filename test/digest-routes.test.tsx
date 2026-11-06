@@ -1,12 +1,14 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import type { NightDigest } from '../src/digest/types.js';
 
 const temporaryDirs: string[] = [];
 const night = '2026-11-04';
+const sampleRuns = fileURLToPath(new URL('../runs/', import.meta.url));
 
 function makeRunsDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'rig-digest-routes-'));
@@ -39,8 +41,15 @@ function entry(overrides: Record<string, unknown> = {}): Record<string, unknown>
 
 function mainTableJobs(html: string): string[] {
   const table = html.match(/<tbody>([\s\S]*?)<\/tbody>/)?.[1] ?? '';
-  return [...table.matchAll(/<tr(?:\s[^>]*)?>\s*<td>([\s\S]*?)<\/td>/g)]
+  return [...table.matchAll(/<tr\b[^>]*>\s*<td\b[^>]*>([\s\S]*?)<\/td>/g)]
     .map((match) => match[1].replace(/<[^>]*>/g, '').trim());
+}
+
+function visibleText(html: string): string {
+  return html.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ').trim();
 }
 
 afterEach(() => {
@@ -48,7 +57,7 @@ afterEach(() => {
 });
 
 describe('digest routes', () => {
-  it('serves matching HTML and JSON rows, ordered by job, with latest-status summary and accessible attention markers', async () => {
+  it('serves matching HTML and JSON rows with final outcomes and historical retry activity', async () => {
     const runsDir = makeRunsDir();
     writeNight(runsDir, night, [
       JSON.stringify(entry({ at: '2026-11-04T08:00:00-05:00', job: 'alpha/retried-success', status: 'retry', error: 'temporary issue' })),
@@ -74,14 +83,19 @@ describe('digest routes', () => {
       'alpha/retried-success', 'bravo/final-retry', 'charlie/failure',
     ]);
     expect(mainTableJobs(html)).toEqual(digest.rows.map(({ job }) => job));
-    expect(html).toContain('Latest status across 3 jobs: 1 success, 1 failure, 1 retry');
-    expect(html).toContain('<strong>3</strong> distinct jobs');
+    expect(html).toContain('aria-label="Latest status across 3 jobs: 1 success, 1 failure, 1 retry"');
+    expect(html).toContain('aria-label="Retry activity: 4 attempts across 2 jobs"');
+    const text = visibleText(html);
+    expect(text).toMatch(/\bTotal jobs\s+3\b/);
+    expect(text).toMatch(/\bSuccessful jobs\s+1\b/);
+    expect(text).toMatch(/\bFailed jobs\s+1\b/);
+    expect(text).toMatch(/\bRetry attempts\s+4\b/);
+    expect(text).toMatch(/\bAcross 2 jobs with retries\b/);
     expect(digest.rows[0]).toMatchObject({ runs: 4, retries: 3, lastStatus: 'ok', owner: null });
     expect(digest.rows[1]).toMatchObject({ retries: 1, lastStatus: 'retry' });
-    expect(html).toContain('<td>—</td>');
-    expect(html).toContain('<tr class="digest-attention"><td>alpha/retried-success</td>');
-    expect(html).toContain('<tr class="digest-attention"><td>charlie/failure</td>');
-    expect(html).toContain('class="warn">fail</td>');
+    expect(mainTableJobs(html)).toContain('alpha/retried-success');
+    expect(text).toContain('—');
+    expect(text).toContain('fail');
     expect(html).toContain('2026-11-04T08:00:00-05:00');
     expect(html).toContain('2026-11-04T08:03:00-05:00');
     expect(digest.rows[0].firstAt).toBe('2026-11-04T08:00:00-05:00');
@@ -91,6 +105,36 @@ describe('digest routes', () => {
     expect(html).not.toMatch(/<img\b/i);
     expect(html).not.toMatch(/\son[a-z]+=/i);
     expect(html).toContain('<style>');
+  });
+
+  it('shows October 28 recovered retry attempts separately from final job outcomes', async () => {
+    const runsDir = makeRunsDir();
+    copyFileSync(join(sampleRuns, '2026-10-28.jsonl'), join(runsDir, '2026-10-28.jsonl'));
+    const app = appFor(runsDir);
+
+    const [htmlResponse, jsonResponse] = await Promise.all([
+      app.request('/digest/2026-10-28'),
+      app.request('/api/digest/2026-10-28'),
+    ]);
+    const html = await htmlResponse.text();
+    const digest = await jsonResponse.json() as NightDigest;
+    const text = visibleText(html);
+
+    expect(htmlResponse.status).toBe(200);
+    expect(jsonResponse.status).toBe(200);
+    expect(digest.rows).toHaveLength(5);
+    expect(digest.rows.filter(({ lastStatus }) => lastStatus === 'ok')).toHaveLength(4);
+    expect(digest.rows.filter(({ lastStatus }) => lastStatus === 'fail')).toHaveLength(1);
+    expect(digest.rows.filter(({ lastStatus }) => lastStatus === 'retry')).toHaveLength(0);
+    expect(html).toContain('aria-label="Latest status across 5 jobs: 4 success, 1 failure, 0 retry"');
+    expect(html).toContain('aria-label="Retry activity: 4 attempts across 2 jobs"');
+    expect(text).toMatch(/\bTotal jobs\s+5\b/);
+    expect(text).toMatch(/\bSuccessful jobs\s+4\b/);
+    expect(text).toMatch(/\bFailed jobs\s+1\b/);
+    expect(text).toMatch(/\bRetry attempts\s+4\b/);
+    expect(text).toMatch(/\bAcross 2 jobs with retries\b/);
+    expect(digest.rows.find(({ job }) => job === 'fixtures/refresh')?.retries).toBe(3);
+    expect(digest.rows.find(({ job }) => job === 'lane/sync')?.retries).toBe(1);
   });
 
   it('returns 404 for missing and invalid nights on both endpoints', async () => {
@@ -119,6 +163,8 @@ describe('digest routes', () => {
     expect(jsonResponse.status).toBe(200);
     expect(html).toContain('nothing ran');
     expect(html).toContain('Latest status across 0 jobs: 0 success, 0 failure, 0 retry');
+    expect(visibleText(html)).toMatch(/\bRetry attempts\s+0\b/);
+    expect(visibleText(html)).toContain('No retry attempts recorded.');
     expect(digest).toEqual({ night, rows: [], badLines: 0 });
   });
 
@@ -161,6 +207,7 @@ describe('digest routes', () => {
     expect(html).toContain('No valid jobs could be read.');
     expect(html).not.toContain('nothing ran');
     expect(html).toContain('Malformed log lines skipped: 2.');
+    expect(visibleText(html)).toContain('No retry attempts recorded.');
   });
 
   it('escapes untrusted job and error strings in HTML while retaining them in JSON', async () => {
