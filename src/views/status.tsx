@@ -18,6 +18,8 @@ export function StatusBoard({ status }: { status: Status }) {
       {status.nights.length === 0 ? (
         <p class="mute">nothing in runs/</p>
       ) : (
+        <>
+        <p class="mute">Unique jobs by latest status. Earlier retry attempts appear in each digest.</p>
         <ul>
           {status.nights.map((n) => {
             const summary = status.nightSummaries.find((item) => item.night === n)?.summary;
@@ -31,6 +33,7 @@ export function StatusBoard({ status }: { status: Status }) {
             );
           })}
         </ul>
+        </>
       )}
     </>
   );

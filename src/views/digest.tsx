@@ -30,14 +30,8 @@ function DigestRowView(props: { row: DigestRow }) {
   );
 }
 
-export function DigestPage(props: { digest: NightDigest; summary?: DigestSummary }) {
-  const { digest } = props;
-  const summary = props.summary ?? {
-    totalJobs: digest.rows.length,
-    success: digest.rows.filter((row) => row.lastStatus === 'ok').length,
-    failure: digest.rows.filter((row) => row.lastStatus === 'fail').length,
-    retry: digest.rows.filter((row) => row.lastStatus === 'retry').length,
-  };
+export function DigestPage(props: { digest: NightDigest; summary: DigestSummary }) {
+  const { digest, summary } = props;
 
   return (
     <article class="digest">
@@ -60,7 +54,7 @@ export function DigestPage(props: { digest: NightDigest; summary?: DigestSummary
       <section aria-labelledby="digest-jobs">
         <h2 id="digest-jobs">Jobs</h2>
         {digest.rows.length === 0 ? (
-          <p>nothing ran</p>
+          <p>{digest.badLines > 0 ? 'No valid jobs could be read.' : 'nothing ran'}</p>
         ) : (
           <div class="digest-table-wrap">
             <table class="digest-table">
