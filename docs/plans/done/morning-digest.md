@@ -91,3 +91,14 @@ page again with `LANE_MARKER` unset (the banner reads "no marker set") and uploa
 link. Move this plan to `docs/plans/done/` with its issue list.
 
 Done when: the preview link no longer shows the lane marker.
+
+## Issues
+
+- [#1 Define the morning-digest contract](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/1)
+- [#2 Read and aggregate nightly run logs](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/2)
+- [#3 Render the digest page and overview graph](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/3)
+- [#4 Expose the matching digest JSON endpoint](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/4)
+- [#5 Link status-board nights to digest pages](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/5)
+- [#6 Test digest routes and overview consistency](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/6)
+- [#7 Publish and submit the morning-digest preview](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/7)
+- [#8 Remove the preview marker and archive the completed plan](https://github.com/hello2kamal/mega-s01e04-before-i-looked/issues/8)
