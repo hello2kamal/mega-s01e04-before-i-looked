@@ -16,6 +16,24 @@ const css = `
   th { color: var(--mute); font-weight: normal; }
   .warn { color: var(--warn); }
   .mute { color: var(--mute); }
+  .digest { max-width: 90rem; }
+  .digest h1 { margin-top: 0; }
+  .digest h2 { margin-bottom: .35rem; font-size: 1.05rem; }
+  .digest section { margin: 1.5rem 0; }
+  .digest-chart { max-width: 32rem; }
+  .digest-bar-row { display: grid; grid-template-columns: 6rem minmax(5rem, 1fr) 2rem; align-items: center; gap: .6rem; margin: .3rem 0; }
+  .digest-bar-track { height: .85rem; overflow: hidden; border: 1px solid var(--line); }
+  .digest-bar-fill { display: block; height: 100%; }
+  .digest-bar-fill.success { background: #39804c; }
+  .digest-bar-fill.failure { background: #b44c3b; }
+  .digest-bar-fill.retry { background: #b47a29; }
+  .digest-bar-count { text-align: right; }
+  .digest-table-wrap { overflow-x: auto; }
+  .digest-table { min-width: 72rem; }
+  .digest-table th, .digest-table td { white-space: nowrap; }
+  .digest-table td:nth-child(6) { white-space: normal; min-width: 14rem; overflow-wrap: anywhere; }
+  .digest-attention { background: color-mix(in srgb, var(--warn) 10%, transparent); }
+  @media (max-width: 40rem) { main { padding: .8rem; } header { padding: .75rem .8rem; } }
 `;
 
 export function Layout(props: { title: string; lane: Lane; children: Child }) {
@@ -25,6 +43,7 @@ export function Layout(props: { title: string; lane: Lane; children: Child }) {
       <html lang="en">
         <head>
           <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
           <title>rig · {props.title}</title>
           <style>{raw(css)}</style>
         </head>
