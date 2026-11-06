@@ -40,11 +40,14 @@ can go to four workers at once. Small, well-specified work: a cheaper model is f
 Done when: `/digest/2026-10-28` renders locally.
 
 User-approved addition: put an overview above the detail table: total distinct jobs and a
-labeled bar chart of success / failure / retry counts by each job's last recorded status.
-These three categories must sum to the total. A job that retried and then succeeded counts
-as success here; its retry-attempt count stays in the table. Build the overview from the
-same rows as the table and JSON, using server-rendered inline CSS or SVG, with numeric
-labels and a zero-safe empty state. No client JavaScript or chart dependency.
+contemporary dashboard with total/successful/failed job cards and a separate retry-attempt
+card. Show a final-job-outcome chart and a retry-activity chart by job. Final status categories
+(ok/fail/retry) sum to distinct jobs. Retry activity sums every row's retry attempts, including
+jobs that later succeeded, and also names the number of affected jobs. These are different
+measures and must not be mixed into one total. On the October 28 sample the overview shows
+five jobs, four successful, one failed, and four retry attempts across two jobs (three plus
+one). Build from the same rows as the table and JSON using server-rendered inline CSS/SVG,
+numeric labels and zero-safe empty states. No client JavaScript or chart dependency.
 
 ### 2b. JSON
 
@@ -66,7 +69,8 @@ Route tests for 2a and 2b: 200, 404 for a night with no file, the empty night, a
 line. Use a temp runs dir; `runs/` is read-only.
 
 Also verify the user-approved overview agrees with the returned job rows, including a job
-that retried and then succeeded and a job whose last status is retry.
+that retried and then succeeded and a job whose last status is retry. Historical retry attempts
+must remain visible in the overview even when no job's final status is retry.
 
 Done when: `pnpm test` is green with the new tests.
 
