@@ -39,6 +39,13 @@ can go to four workers at once. Small, well-specified work: a cheaper model is f
 
 Done when: `/digest/2026-10-28` renders locally.
 
+User-approved addition: put an overview above the detail table: total distinct jobs and a
+labeled bar chart of success / failure / retry counts by each job's last recorded status.
+These three categories must sum to the total. A job that retried and then succeeded counts
+as success here; its retry-attempt count stays in the table. Build the overview from the
+same rows as the table and JSON, using server-rendered inline CSS or SVG, with numeric
+labels and a zero-safe empty state. No client JavaScript or chart dependency.
+
 ### 2b. JSON
 
 `GET /api/digest/:night` returns the same rows as JSON. Agents read this one; the page and the
@@ -57,6 +64,9 @@ Done when: both nights on disk link to a digest that renders.
 
 Route tests for 2a and 2b: 200, 404 for a night with no file, the empty night, a night with a bad
 line. Use a temp runs dir; `runs/` is read-only.
+
+Also verify the user-approved overview agrees with the returned job rows, including a job
+that retried and then succeeded and a job whose last status is retry.
 
 Done when: `pnpm test` is green with the new tests.
 
